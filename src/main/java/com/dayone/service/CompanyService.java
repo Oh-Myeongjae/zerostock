@@ -36,14 +36,14 @@ public class CompanyService {
 
     public Company save(String ticker) {
         boolean exists = this.companyRepository.existsByTicker(ticker);
-        if(exists){
+        if (exists) {
             throw new RuntimeException("already exists ticker -> " + ticker);
         }
         return this.storeCompanyAndDividend(ticker);
     }
 
     public Page<CompanyEntity> getAllCompany(Pageable pageable) {
-        throw new NotYetImplementedException();
+        return this.companyRepository.findAll(pageable);
     }
 
     private Company storeCompanyAndDividend(String ticker) {
