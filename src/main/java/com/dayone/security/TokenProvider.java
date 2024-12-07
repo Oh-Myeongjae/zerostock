@@ -6,7 +6,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -44,7 +43,17 @@ public class TokenProvider {
         //      - signature
 
         // jwt 발급
-        throw new NotYetImplementedException();
+        Claims claims = Jwts.claims().setSubject(username);
+        claims.put(KEY_ROLES, roles);
+
+        var now = new Date();   // 생성된 시간
+        var expiredDate = new Date(now.getTime() + TOKEN_EXPIRE_TIME);
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(expiredDate)
+                .signWith(SignatureAlgorithm.HS512, this.secretKey) // 사용할 알고리즘과 비밀키
+                .compact();
     }
 
     public Authentication getAuthentication(String jwt) {

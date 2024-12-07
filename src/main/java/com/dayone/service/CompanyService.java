@@ -10,7 +10,6 @@ import com.dayone.scraper.Scraper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.Trie;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -84,9 +83,14 @@ public class CompanyService {
     }
 
     public String deleteCompany(String ticker) {
+        var company = this.companyRepository.findByTicker(ticker)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 회사입니다."));
         // 1. 배당금 정보 삭제
+        this.dividendRepository.deleteAllByCompanyId(company.getId());
         // 2. 회사 정보 삭제
-        throw new NotYetImplementedException();
+        this.companyRepository.delete(company);
+        this.deleteAutocompleteKeyword(company.getName());
+        return company.getName();
     }
 
 }

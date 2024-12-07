@@ -1,12 +1,10 @@
 package com.dayone.service;
 
-import com.dayone.exception.impl.AlreadyExistUserException;
 import com.dayone.model.Auth;
 import com.dayone.persist.MemberRepository;
 import com.dayone.persist.entity.MemberEntity;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.cfg.NotYetImplementedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,14 +27,17 @@ public class MemberService implements UserDetailsService {
 
     public MemberEntity register(Auth.SignUp member) {
         // 아이디가 존재하는 경우 exception 발생
-        boolean exists = false; // not implemented yet
+        boolean exists = this.memberRepository.existsByUsername(member.getUsername());
+
         if (exists) {
-            throw new AlreadyExistUserException();
+            throw new RuntimeException("이미 사용중인 아이디입니다.");
         }
 
         // ID 생성 가능한 경우, 멤버 테이블에 저장
         // 비밀번호는 암호화 되어서 저장되어야함
-        throw new NotYetImplementedException();
+        member.setPassword(this.passwordEncoder.encode(member.getPassword()));
+        var result = this.memberRepository.save(member.toEntity());
+        return result;
     }
 
     public MemberEntity authenticate(Auth.SignIn member) {
@@ -45,6 +46,14 @@ public class MemberService implements UserDetailsService {
         // 패스워드 일치 여부 확인
         //      - 일치하지 않는 경우 400 status 코드와 적합한 에러 메시지 반환
         //      - 일치하는 경우, 해당 멤버 엔티티 반환
-        throw new NotYetImplementedException();
+
+        // user의 비번은 인코딩된 상태이다.member의 비번은 암호화되지 않은 상태
+        var user = this.memberRepository.findByUsername(member.getUsername())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 ID입니다."));
+        // 비번 확인
+        if(!this.passwordEncoder.matches(member.getPassword(), user.getPassword())){
+            throw new RuntimeException("비밀 번호가 일치하지 않습니다.");
+        }
+        return user;
     }
 }
